@@ -26,7 +26,7 @@ RUN ./configure --with-objectstore-backend-db --disable-gost --enable-eddsa --en
 
 RUN make
 # Tests
-# RUN make check
+RUN make check
 
 RUN make install
 
