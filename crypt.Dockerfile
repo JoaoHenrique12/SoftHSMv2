@@ -1,6 +1,5 @@
 FROM ubuntu:24.04 AS crypt_builder
 
-# Install build dependencies in a single layer
 RUN apt update && \
     apt install -y \
     build-essential \
@@ -8,7 +7,7 @@ RUN apt update && \
     libtext-template-perl \
     wget \
     git && \
-    rm -rf /var/lib/apt/lists/* # Clean up apt cache to reduce image size
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /crypt
 
@@ -17,27 +16,24 @@ RUN wget https://github.com/openssl/openssl/archive/refs/tags/openssl-3.5.1.tar.
     tar -xvf openssl-3.5.1.tar.gz -C openssl --strip-components=1 && \
     rm openssl-3.5.1.tar.gz
 
-# Change WORKDIR to the openssl source directory
 WORKDIR /crypt/openssl
-RUN ./config --prefix=/usr/local --openssldir=/usr/local/ssl shared && \
+
+RUN ./config --prefix=/usr/local --openssldir=/usr/local/ssl -Wl,-rpath=/usr/local/lib && \
     make -j$(nproc) && \
     make install
 
 FROM ubuntu:24.04 AS final_image
 
-# Install only runtime dependencies if needed
-# For openssl, the libraries are dynamic, so they need to be present.
-# Since the install to /usr/local, we'll copy them.
-
-# Copy OpenSSL binary and libraries from the builder stage
 COPY --from=crypt_builder /usr/local/bin/openssl /usr/local/bin/
-COPY --from=crypt_builder /usr/local/lib/ /usr/local/lib/
+COPY --from=crypt_builder /usr/local/lib64/ /usr/local/lib64/
 COPY --from=crypt_builder /usr/local/ssl/ /usr/local/ssl/
 
-# Re-run ldconfig to update the linker cache in the final image
-RUN ldconfig
+# Configura o loader para encontrar as bibliotecas
+RUN echo '/usr/local/lib64' > /etc/ld.so.conf.d/openssl.conf && \
+    ldconfig
 
-# Set default command or entrypoint
+ENV LD_LIBRARY_PATH=/usr/local/lib64
+
 CMD ["bash"]
 
 
