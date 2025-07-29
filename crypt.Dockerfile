@@ -1,40 +1,44 @@
 FROM ubuntu:24.04 AS crypt_builder
 
+# Install build dependencies in a single layer
 RUN apt update && \
     apt install -y \
     build-essential \
     make \
     libtext-template-perl \
     wget \
-    sudo \
-    git
-
-# openssl instalation guide:
-# https://github.com/openssl/openssl/blob/master/INSTALL.md
+    git && \
+    rm -rf /var/lib/apt/lists/* # Clean up apt cache to reduce image size
 
 WORKDIR /crypt
 
-RUN wget https://github.com/openssl/openssl/archive/refs/tags/openssl-3.5.1.tar.gz
+RUN wget https://github.com/openssl/openssl/archive/refs/tags/openssl-3.5.1.tar.gz && \
+    mkdir openssl && \
+    tar -xvf openssl-3.5.1.tar.gz -C openssl --strip-components=1 && \
+    rm openssl-3.5.1.tar.gz
 
-RUN mkdir openssl
-RUN tar -xvf openssl-3.5.1.tar.gz -C openssl --strip-components=1
+# Change WORKDIR to the openssl source directory
+WORKDIR /crypt/openssl
+RUN ./config --prefix=/usr/local --openssldir=/usr/local/ssl shared && \
+    make -j$(nproc) && \
+    make install
 
-RUN cd openssl
-RUN ./Configure
-RUN make
-# should use non root user to run tests
-# RUN make test
+FROM ubuntu:24.04 AS final_image
 
-# The binary will be installed on 
-# /usr/local/bin/openssl
-RUN make install
+# Install only runtime dependencies if needed
+# For openssl, the libraries are dynamic, so they need to be present.
+# Since the install to /usr/local, we'll copy them.
 
-# https://github.com/openssl/openssl/blob/master/NOTES-UNIX.md
-# tells the dynamic linker to look in new library path before the system paths
-RUN export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+# Copy OpenSSL binary and libraries from the builder stage
+COPY --from=crypt_builder /usr/local/bin/openssl /usr/local/bin/
+COPY --from=crypt_builder /usr/local/lib/ /usr/local/lib/
+COPY --from=crypt_builder /usr/local/ssl/ /usr/local/ssl/
 
-RUN cd ..
-RUN mkdir tests && cd tests
+# Re-run ldconfig to update the linker cache in the final image
+RUN ldconfig
+
+# Set default command or entrypoint
+CMD ["bash"]
 
 
 # list algorithms
@@ -53,5 +57,3 @@ RUN mkdir tests && cd tests
 
 # verify
 # /usr/local/bin/openssl pkeyutl -verify -in message.txt -pubin -inkey slhdsa_public.pem -sigfile message.sig -rawin
-
-CMD ["bash"]
