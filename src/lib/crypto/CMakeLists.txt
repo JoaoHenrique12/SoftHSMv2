@@ -54,10 +54,6 @@ if(WITH_OPENSSL)
                         OSSLECKeyPair.cpp
                         OSSLECPrivateKey.cpp
                         OSSLECPublicKey.cpp
-                        OSSLEDDSA.cpp
-                        OSSLEDKeyPair.cpp
-                        OSSLEDPrivateKey.cpp
-                        OSSLEDPublicKey.cpp
                         OSSLEVPCMacAlgorithm.cpp
                         OSSLEVPHashAlgorithm.cpp
                         OSSLEVPMacAlgorithm.cpp
@@ -104,10 +100,6 @@ if(WITH_BOTAN)
                         BotanECDSAKeyPair.cpp
                         BotanECDSAPrivateKey.cpp
                         BotanECDSAPublicKey.cpp
-                        BotanEDDSA.cpp
-                        BotanEDKeyPair.cpp
-                        BotanEDPrivateKey.cpp
-                        BotanEDPublicKey.cpp
                         BotanGOST.cpp
                         BotanGOSTKeyPair.cpp
                         BotanGOSTPrivateKey.cpp

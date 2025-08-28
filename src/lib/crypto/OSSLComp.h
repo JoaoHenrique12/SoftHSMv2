@@ -82,10 +82,6 @@ void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps);
 int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s);
 #endif
 
-// EDDSA
-#ifdef WITH_EDDSA
-#error This OpenSSL version is incompatible with EDDSA
-#endif
 
 // RSA routines
 int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d);

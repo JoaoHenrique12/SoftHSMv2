@@ -18,16 +18,6 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 		[enable_gost="detect"]
 	)
 
-	# Add Eddsa check
-
-	AC_ARG_ENABLE(eddsa,
-		AS_HELP_STRING([--enable-eddsa],
-			[Enable support for EDDSA (default detect)]
-		),
-		[enable_eddsa="${enableval}"],
-		[enable_eddsa="detect"]
-	)
-
 	# Second check for the FIPS 140-2 mode
 
 	AC_ARG_ENABLE(fips,
@@ -91,15 +81,6 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 			detect-*) enable_ecc="${have_lib_openssl_ecc_support}";;
 		esac
 
-		case "${enable_eddsa}" in
-			yes|detect) ACX_OPENSSL_EDDSA;;
-		esac
-		case "${enable_eddsa}-${have_lib_openssl_ed25519_support}-${have_lib_openssl_ed448_support}" in
-			yes*-no*) AC_MSG_ERROR([OpenSSL library has no EDDSA support]);;
-			detect-yes-yes) enable_eddsa="yes";;
-			detect*-no*) enable_eddsa="no";;
-		esac
-
 		case "${enable_gost}-${enable_fips}" in
 			yes-yes) AC_MSG_ERROR([GOST is not FIPS approved]);;
 			yes-no|detect-no) ACX_OPENSSL_GOST;;
@@ -158,14 +139,6 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 			detect-*) enable_ecc="${have_lib_botan_ecc_support}";;
 		esac
 
-		case "${enable_eddsa}" in
-			yes|detect) ACX_BOTAN_EDDSA;;
-		esac
-		case "${enable_eddsa}-${have_lib_botan_eddsa_support}" in
-			yes-no) AC_MSG_ERROR([Botan library has no EDDSA support]);;
-			detect-*) enable_eddsa="${have_lib_botan_eddsa_support}";;
-		esac
-
 		case "${enable_gost}" in
 			yes|detect) ACX_BOTAN_GOST;;
 		esac
@@ -217,19 +190,6 @@ AC_DEFUN([ACX_CRYPTO_BACKEND],[
 		AC_MSG_RESULT(no)
 	fi
 	AM_CONDITIONAL([WITH_GOST], [test "x${enable_gost}" = "xyes"])
-
-	AC_MSG_CHECKING(for EDDSA support)
-	if test "x${enable_eddsa}" = "xyes"; then
-		AC_MSG_RESULT(yes)
-		AC_DEFINE_UNQUOTED(
-			[WITH_EDDSA],
-			[],
-			[Compile with EDDSA support]
-		)
-	else
-		AC_MSG_RESULT(no)
-	fi
-	AM_CONDITIONAL([WITH_EDDSA], [test "x${enable_eddsa}" = "xyes"])
 
 
 	AC_SUBST(CRYPTO_INCLUDES)

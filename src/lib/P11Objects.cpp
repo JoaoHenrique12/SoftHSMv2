@@ -897,10 +897,6 @@ bool P11EDPublicKeyObj::init(OSObject *inobject)
 	if (initialized) return true;
 	if (inobject == NULL) return false;
 
-	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_EC_EDWARDS) {
-		OSAttribute setKeyType((unsigned long)CKK_EC_EDWARDS);
-		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
-	}
 
 	// Create parent
 	if (!P11PublicKeyObj::init(inobject)) return false;
@@ -1301,11 +1297,6 @@ bool P11EDPrivateKeyObj::init(OSObject *inobject)
 {
 	if (initialized) return true;
 	if (inobject == NULL) return false;
-
-	if (!inobject->attributeExists(CKA_KEY_TYPE) || inobject->getUnsignedLongValue(CKA_KEY_TYPE, CKK_VENDOR_DEFINED) != CKK_EC_EDWARDS) {
-		OSAttribute setKeyType((unsigned long)CKK_EC_EDWARDS);
-		inobject->setAttribute(CKA_KEY_TYPE, setKeyType);
-	}
 
 	// Create parent
 	if (!P11PrivateKeyObj::init(inobject)) return false;

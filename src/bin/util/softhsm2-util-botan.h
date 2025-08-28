@@ -38,12 +38,6 @@
 #ifdef WITH_ECC
 #include <botan/ecdsa.h>
 #endif
-#ifdef WITH_EDDSA
-#include <botan/curve25519.h>
-#include <botan/ed25519.h>
-// #include <botan/curve448.h>
-// #include <botan/ed448.h>
-#endif
 
 typedef struct rsa_key_material_t {
 	CK_ULONG sizeE;
@@ -126,25 +120,6 @@ typedef struct ecdsa_key_material_t {
 } ecdsa_key_material_t;
 #endif
 
-#ifdef WITH_EDDSA
-typedef struct eddsa_key_material_t {
-	CK_ULONG sizeOID;
-	CK_ULONG sizeK;
-	CK_ULONG sizeA;
-	CK_VOID_PTR derOID;
-	CK_VOID_PTR bigK;
-	CK_VOID_PTR bigA;
-	eddsa_key_material_t() {
-		sizeOID = 0;
-		sizeK = 0;
-		sizeA = 0;
-		derOID = NULL_PTR;
-		bigK = NULL_PTR;
-		bigA = NULL_PTR;
-	}
-} eddsa_key_material_t;
-#endif
-
 Botan::Private_Key* crypto_read_file(char* filePath, char* filePIN);
 
 // RSA
@@ -162,13 +137,6 @@ void crypto_free_dsa(dsa_key_material_t* keyMat);
 int crypto_save_ecdsa(CK_SESSION_HANDLE hSession, char* label, char* objID, size_t objIDLen, int noPublicKey, Botan::ECDSA_PrivateKey* ecdsa);
 ecdsa_key_material_t* crypto_malloc_ecdsa(Botan::ECDSA_PrivateKey* ecdsa);
 void crypto_free_ecdsa(ecdsa_key_material_t* keyMat);
-#endif
-
-// EDDSA
-#ifdef WITH_EDDSA
-int crypto_save_eddsa(CK_SESSION_HANDLE hSession, char* label, char* objID, size_t objIDLen, int noPublicKey, Botan::Curve25519_PrivateKey* x25519, Botan::Ed25519_PrivateKey* ed25519);
-eddsa_key_material_t* crypto_malloc_eddsa(Botan::Curve25519_PrivateKey* x25519, Botan::Ed25519_PrivateKey* ed25519);
-void crypto_free_eddsa(eddsa_key_material_t* keyMat);
 #endif
 
 #endif // !_SOFTHSM_V2_SOFTHSM2_UTIL_BOTAN_H
