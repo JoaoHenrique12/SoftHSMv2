@@ -39,7 +39,7 @@
 #ifdef WITH_ECC
 #include <openssl/ec.h>
 #endif
-#ifdef WITH_EDDSA
+#if defined(WITH_EDDSA) || defined(WITH_SLHDSA)
 #include <openssl/objects.h>
 #endif
 
@@ -65,7 +65,7 @@ namespace OSSL
 	EC_POINT* byteString2pt(const ByteString& byteString, const EC_GROUP* grp);
 #endif
 
-#ifdef WITH_EDDSA
+#if defined(WITH_EDDSA) || defined(WITH_SLHDSA)
 	// Convert an OpenSSL NID to a ByteString
 	ByteString oid2ByteString(int nid);
 
