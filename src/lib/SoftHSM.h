@@ -48,6 +48,8 @@
 #include "ECPrivateKey.h"
 #include "EDPublicKey.h"
 #include "EDPrivateKey.h"
+#include "SLHPublicKey.h"
+#include "SLHPrivateKey.h"
 #include "DHPublicKey.h"
 #include "DHPrivateKey.h"
 #include "GOSTPublicKey.h"
@@ -428,6 +430,8 @@ private:
 	CK_RV getECPublicKey(ECPublicKey* publicKey, Token* token, OSObject* key);
 	CK_RV getEDPrivateKey(EDPrivateKey* privateKey, Token* token, OSObject* key);
 	CK_RV getEDPublicKey(EDPublicKey* publicKey, Token* token, OSObject* key);
+	CK_RV getSLHPrivateKey(SLHPrivateKey* privateKey, Token* token, OSObject* key);
+	CK_RV getSLHPublicKey(SLHPublicKey* publicKey, Token* token, OSObject* key);
 	CK_RV getDHPrivateKey(DHPrivateKey* privateKey, Token* token, OSObject* key);
 	CK_RV getDHPublicKey(DHPublicKey* publicKey, DHPrivateKey* privateKey, ByteString& pubParams);
 	CK_RV getECDHPublicKey(ECPublicKey* publicKey, ECPrivateKey* privateKey, ByteString& pubData);

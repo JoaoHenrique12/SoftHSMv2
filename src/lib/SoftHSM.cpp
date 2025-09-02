@@ -820,6 +820,10 @@ void SoftHSM::prepareSupportedMechanisms(std::map<std::string, CK_MECHANISM_TYPE
 	t["CKM_EC_EDWARDS_KEY_PAIR_GEN"] = CKM_EC_EDWARDS_KEY_PAIR_GEN;
 	t["CKM_EDDSA"]			= CKM_EDDSA;
 #endif
+#ifdef WITH_SLHDSA
+	t["CKM_EC_EDWARDS_KEY_PAIR_GEN"] = CKM_EC_EDWARDS_KEY_PAIR_GEN;
+	t["CKM_EDDSA"]			= CKM_EDDSA;
+#endif
 	t["CKM_CONCATENATE_DATA_AND_BASE"] = CKM_CONCATENATE_DATA_AND_BASE;
 	t["CKM_CONCATENATE_BASE_AND_DATA"] = CKM_CONCATENATE_BASE_AND_DATA;
 	t["CKM_CONCATENATE_BASE_AND_KEY"] = CKM_CONCATENATE_BASE_AND_KEY;
@@ -920,9 +924,10 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 #ifdef WITH_ECC
 	unsigned long ecdsaMinSize, ecdsaMaxSize;
 #endif
-#if defined(WITH_ECC) || defined(WITH_EDDSA)
+#if defined(WITH_ECC) || defined(WITH_EDDSA) || defined(WITH_SLHDSA)
 	unsigned long ecdhMinSize = 0, ecdhMaxSize = 0;
 	unsigned long eddsaMinSize = 0, eddsaMaxSize = 0;
+	unsigned long slhdsaMinSize = 0, slhdsaMaxSize = 0;
 #endif
 
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
@@ -1020,6 +1025,21 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 	}
 	CryptoFactory::i()->recycleAsymmetricAlgorithm(eddsa);
 #endif
+
+#ifdef WITH_SLHDSA
+	AsymmetricAlgorithm* slhdsa = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::SLHDSA);
+	if (slhdsa != NULL)
+	{
+		slhdsaMinSize = slhdsa->getMinKeySize();
+		slhdsaMaxSize = slhdsa->getMaxKeySize();
+	}
+	else
+	{
+		return CKR_GENERAL_ERROR;
+	}
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(slhdsa);
+#endif
+
 	pInfo->flags = 0;	// initialize flags
 	switch (type)
 	{
@@ -1302,6 +1322,18 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 		case CKM_EDDSA:
 			pInfo->ulMinKeySize = eddsaMinSize;
 			pInfo->ulMaxKeySize = eddsaMaxSize;
+			pInfo->flags = CKF_SIGN | CKF_VERIFY;
+			break;
+#endif
+#ifdef WITH_SLHDSA
+		case CKM_EC_EDWARDS_KEY_PAIR_GEN:
+			pInfo->ulMinKeySize = slhdsaMinSize;
+			pInfo->ulMaxKeySize = slhdsaMaxSize;
+			pInfo->flags = CKF_GENERATE_KEY_PAIR;
+			break;
+		case CKM_EDDSA:
+			pInfo->ulMinKeySize = slhdsaMinSize;
+			pInfo->ulMaxKeySize = slhdsaMaxSize;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY;
 			break;
 #endif
@@ -4144,6 +4176,9 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 #ifdef WITH_EDDSA
 	bool isEDDSA = false;
 #endif
+#ifdef WITH_SLHDSA
+	bool isSLHDSA = false;
+#endif
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
 			mechanism = AsymMech::RSA_PKCS;
@@ -4385,6 +4420,13 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 			isEDDSA = true;
 			break;
 #endif
+#ifdef WITH_SLHDSA
+		case CKM_EDDSA:
+			mechanism = AsymMech::SLHDSA;
+			bAllowMultiPartOp = false;
+			isSLHDSA = true;
+			break;
+#endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -4464,6 +4506,27 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 		}
 
 		if (getEDPrivateKey((EDPrivateKey*)privateKey, token, key) != CKR_OK)
+		{
+			asymCrypto->recyclePrivateKey(privateKey);
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_GENERAL_ERROR;
+		}
+	}
+#endif
+#ifdef WITH_SLHDSA
+	else if (isSLHDSA)
+	{
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::SLHDSA);
+		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
+
+		privateKey = asymCrypto->newPrivateKey();
+		if (privateKey == NULL)
+		{
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_HOST_MEMORY;
+		}
+
+		if (getSLHPrivateKey((SLHPrivateKey*)privateKey, token, key) != CKR_OK)
 		{
 			asymCrypto->recyclePrivateKey(privateKey);
 			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
@@ -5122,6 +5185,9 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 #ifdef WITH_EDDSA
 	bool isEDDSA = false;
 #endif
+#ifdef WITH_SLHDSA
+	bool isSLHDSA = false;
+#endif
 	switch(pMechanism->mechanism) {
 		case CKM_RSA_PKCS:
 			mechanism = AsymMech::RSA_PKCS;
@@ -5361,6 +5427,13 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			isEDDSA = true;
 			break;
 #endif
+#ifdef WITH_SLHDSA
+		case CKM_EDDSA:
+			mechanism = AsymMech::SLHDSA;
+			bAllowMultiPartOp = false;
+			isSLHDSA = true;
+			break;
+#endif
 		default:
 			return CKR_MECHANISM_INVALID;
 	}
@@ -5440,6 +5513,27 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 		}
 
 		if (getEDPublicKey((EDPublicKey*)publicKey, token, key) != CKR_OK)
+		{
+			asymCrypto->recyclePublicKey(publicKey);
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_GENERAL_ERROR;
+		}
+	}
+#endif
+#ifdef WITH_SLHDSA
+	else if (isSLHDSA)
+	{
+		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::SLHDSA);
+		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
+
+		publicKey = asymCrypto->newPublicKey();
+		if (publicKey == NULL)
+		{
+			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
+			return CKR_HOST_MEMORY;
+		}
+
+		if (getSLHPublicKey((SLHPublicKey*)publicKey, token, key) != CKR_OK)
 		{
 			asymCrypto->recyclePublicKey(publicKey);
 			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
@@ -6053,6 +6147,11 @@ CK_RV SoftHSM::C_GenerateKeyPair
 			break;
 #endif
 #ifdef WITH_EDDSA
+		case CKM_EC_EDWARDS_KEY_PAIR_GEN:
+			keyType = CKK_EC_EDWARDS;
+			break;
+#endif
+#ifdef WITH_SLHDSA
 		case CKM_EC_EDWARDS_KEY_PAIR_GEN:
 			keyType = CKK_EC_EDWARDS;
 			break;
@@ -12601,6 +12700,71 @@ CK_RV SoftHSM::getEDPublicKey(EDPublicKey* publicKey, Token* token, OSObject* ke
 
 	return CKR_OK;
 }
+
+CK_RV SoftHSM::getSLHPrivateKey(SLHPrivateKey* privateKey, Token* token, OSObject* key)
+{
+	if (privateKey == NULL) return CKR_ARGUMENTS_BAD;
+	if (token == NULL) return CKR_ARGUMENTS_BAD;
+	if (key == NULL) return CKR_ARGUMENTS_BAD;
+
+	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
+	bool isKeyPrivate = key->getBooleanValue(CKA_PRIVATE, false);
+
+	// SLHDSA Private Key Attributes
+	ByteString group;
+	ByteString value;
+	if (isKeyPrivate)
+	{
+		bool bOK = true;
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_EC_PARAMS), group);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_VALUE), value);
+		if (!bOK)
+			return CKR_GENERAL_ERROR;
+	}
+	else
+	{
+		group = key->getByteStringValue(CKA_EC_PARAMS);
+		value = key->getByteStringValue(CKA_VALUE);
+	}
+
+	privateKey->setEC(group);
+	privateKey->setK(value);
+
+	return CKR_OK;
+}
+
+CK_RV SoftHSM::getSLHPublicKey(SLHPublicKey* publicKey, Token* token, OSObject* key)
+{
+	if (publicKey == NULL) return CKR_ARGUMENTS_BAD;
+	if (token == NULL) return CKR_ARGUMENTS_BAD;
+	if (key == NULL) return CKR_ARGUMENTS_BAD;
+
+	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
+	bool isKeyPrivate = key->getBooleanValue(CKA_PRIVATE, false);
+
+	// EC Public Key Attributes
+	ByteString group;
+	ByteString value;
+	if (isKeyPrivate)
+	{
+		bool bOK = true;
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_EC_PARAMS), group);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_EC_POINT), value);
+		if (!bOK)
+			return CKR_GENERAL_ERROR;
+	}
+	else
+	{
+		group = key->getByteStringValue(CKA_EC_PARAMS);
+		value = key->getByteStringValue(CKA_EC_POINT);
+	}
+
+	publicKey->setEC(group);
+	publicKey->setA(value);
+
+	return CKR_OK;
+}
+
 
 CK_RV SoftHSM::getDHPrivateKey(DHPrivateKey* privateKey, Token* token, OSObject* key)
 {
