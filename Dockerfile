@@ -47,7 +47,8 @@ RUN apt update && \
     libcppunit-dev \
     sudo \
     opensc \
-    opensc-pkcs11
+    opensc-pkcs11 \
+    busybox-syslogd
 
 WORKDIR /app
 COPY . /app
@@ -63,7 +64,18 @@ RUN make install
 # If needed, the conf file definitions goes here.
 # about conf file: man softhsm2.conf
 
-RUN mkdir -p /var/lib/softhsm/tokens/
+# Create config dir and log file
+RUN mkdir -p /etc/softhsm /var/lib/softhsm/tokens
+
+# Write softhsm2.conf
+RUN cat > /etc/softhsm/softhsm2.conf <<'EOF'
+directories.tokendir = /var/lib/softhsm/tokens/
+
+log.level = DEBUG
+EOF
+
+# INIT SYSLOG
+# syslogd -n -O /var/log/syslog &
 
 RUN softhsm2-util --init-token --slot 0 --label "My SoftHSM Token" --so-pin 0000 --pin 0000
 
