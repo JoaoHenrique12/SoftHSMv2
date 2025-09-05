@@ -315,6 +315,20 @@ private:
 		CK_BBOOL isPrivateKeyOnToken,
 		CK_BBOOL isPrivateKeyPrivate
 	);
+	CK_RV generateSLH
+	(
+		CK_SESSION_HANDLE hSession,
+		CK_ATTRIBUTE_PTR pPublicKeyTemplate,
+		CK_ULONG ulPublicKeyAttributeCount,
+		CK_ATTRIBUTE_PTR pPrivateKeyTemplate,
+		CK_ULONG ulPrivateKeyAttributeCount,
+		CK_OBJECT_HANDLE_PTR phPublicKey,
+		CK_OBJECT_HANDLE_PTR phPrivateKey,
+		CK_BBOOL isPublicKeyOnToken,
+		CK_BBOOL isPublicKeyPrivate,
+		CK_BBOOL isPrivateKeyOnToken,
+		CK_BBOOL isPrivateKeyPrivate
+	);
 	CK_RV generateDH
 	(
 		CK_SESSION_HANDLE hSession,
