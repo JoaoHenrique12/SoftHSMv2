@@ -68,10 +68,10 @@ RUN make install
 RUN mkdir -p /etc/softhsm /var/lib/softhsm/tokens
 
 # Write softhsm2.conf
-RUN cat > /etc/softhsm/softhsm2.conf <<'EOF'
+RUN cat > /etc/softhsm2.conf <<'EOF'
 directories.tokendir = /var/lib/softhsm/tokens/
 
-log.level = DEBUG
+log.level = INFO
 EOF
 
 # INIT SYSLOG
