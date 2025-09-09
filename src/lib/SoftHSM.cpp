@@ -140,6 +140,8 @@ static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, CK_CERT
 				*p11object = new P11GOSTPublicKeyObj();
 			else if (keyType == CKK_EC_EDWARDS)
 				*p11object = new P11EDPublicKeyObj();
+			else if (keyType == CKK_SLHDSA)
+				*p11object = new P11SLHPublicKeyObj();
 			else
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			break;
@@ -157,6 +159,8 @@ static CK_RV newP11Object(CK_OBJECT_CLASS objClass, CK_KEY_TYPE keyType, CK_CERT
 				*p11object = new P11GOSTPrivateKeyObj();
 			else if (keyType == CKK_EC_EDWARDS)
 				*p11object = new P11EDPrivateKeyObj();
+			else if (keyType == CKK_SLHDSA)
+				*p11object = new P11SLHPrivateKeyObj();
 			else
 				return CKR_ATTRIBUTE_VALUE_INVALID;
 			break;
@@ -821,8 +825,8 @@ void SoftHSM::prepareSupportedMechanisms(std::map<std::string, CK_MECHANISM_TYPE
 	t["CKM_EDDSA"]			= CKM_EDDSA;
 #endif
 #ifdef WITH_SLHDSA
-	t["CKM_EC_EDWARDS_KEY_PAIR_GEN"] = CKM_EC_EDWARDS_KEY_PAIR_GEN;
-	t["CKM_EDDSA"]			= CKM_EDDSA;
+	t["CKM_SLH_KEY_PAIR_GEN"] = CKM_SLH_KEY_PAIR_GEN;
+	t["CKM_SLHDSA"]			= CKM_SLHDSA;
 #endif
 	t["CKM_CONCATENATE_DATA_AND_BASE"] = CKM_CONCATENATE_DATA_AND_BASE;
 	t["CKM_CONCATENATE_BASE_AND_DATA"] = CKM_CONCATENATE_BASE_AND_DATA;
@@ -1326,12 +1330,12 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			break;
 #endif
 #ifdef WITH_SLHDSA
-		case CKM_EC_EDWARDS_KEY_PAIR_GEN:
+		case CKM_SLH_KEY_PAIR_GEN:
 			pInfo->ulMinKeySize = slhdsaMinSize;
 			pInfo->ulMaxKeySize = slhdsaMaxSize;
 			pInfo->flags = CKF_GENERATE_KEY_PAIR;
 			break;
-		case CKM_EDDSA:
+		case CKM_SLHDSA:
 			pInfo->ulMinKeySize = slhdsaMinSize;
 			pInfo->ulMaxKeySize = slhdsaMaxSize;
 			pInfo->flags = CKF_SIGN | CKF_VERIFY;
@@ -4421,7 +4425,7 @@ CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechan
 			break;
 #endif
 #ifdef WITH_SLHDSA
-		case CKM_EDDSA:
+		case CKM_SLHDSA:
 			mechanism = AsymMech::SLHDSA;
 			bAllowMultiPartOp = false;
 			isSLHDSA = true;
@@ -5428,7 +5432,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			break;
 #endif
 #ifdef WITH_SLHDSA
-		case CKM_EDDSA:
+		case CKM_SLHDSA:
 			mechanism = AsymMech::SLHDSA;
 			bAllowMultiPartOp = false;
 			isSLHDSA = true;
@@ -6152,8 +6156,8 @@ CK_RV SoftHSM::C_GenerateKeyPair
 			break;
 #endif
 #ifdef WITH_SLHDSA
-		case CKM_EC_EDWARDS_KEY_PAIR_GEN:
-			keyType = CKK_EC_EDWARDS;
+		case CKM_SLH_KEY_PAIR_GEN:
+			keyType = CKK_SLHDSA;
 			break;
 #endif
 		default:
@@ -6183,6 +6187,8 @@ CK_RV SoftHSM::C_GenerateKeyPair
 		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_EC_EDWARDS_KEY_PAIR_GEN && keyType != CKK_EC_EDWARDS)
 		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_SLH_KEY_PAIR_GEN && keyType != CKK_SLHDSA)
+		return CKR_TEMPLATE_INCONSISTENT;
 
 	// Extract information from the private key template that is needed to create the object.
 	CK_OBJECT_CLASS privateKeyClass = CKO_PRIVATE_KEY;
@@ -6205,6 +6211,8 @@ CK_RV SoftHSM::C_GenerateKeyPair
 	if (pMechanism->mechanism == CKM_GOSTR3410_KEY_PAIR_GEN && keyType != CKK_GOSTR3410)
 		return CKR_TEMPLATE_INCONSISTENT;
 	if (pMechanism->mechanism == CKM_EC_EDWARDS_KEY_PAIR_GEN && keyType != CKK_EC_EDWARDS)
+		return CKR_TEMPLATE_INCONSISTENT;
+	if (pMechanism->mechanism == CKM_SLH_KEY_PAIR_GEN && keyType != CKK_SLHDSA)
 		return CKR_TEMPLATE_INCONSISTENT;
 
 	// Check user credentials
@@ -6270,7 +6278,7 @@ CK_RV SoftHSM::C_GenerateKeyPair
 	}
 
 	// Generate SLHDSA keys
-	if (pMechanism->mechanism == CKM_EC_EDWARDS_KEY_PAIR_GEN)
+	if (pMechanism->mechanism == CKM_SLH_KEY_PAIR_GEN)
 	{
 			return this->generateSLH(hSession,
 									 pPublicKeyTemplate, ulPublicKeyAttributeCount,
@@ -10017,7 +10025,7 @@ CK_RV SoftHSM::generateSLH
 	{
 		switch (pPublicKeyTemplate[i].type)
 		{
-			case CKA_EC_PARAMS:
+			case CKA_SLHDSA_PARAMS:
 				params = ByteString((unsigned char*)pPublicKeyTemplate[i].pValue, pPublicKeyTemplate[i].ulValueLen);
 				break;
 			default:
@@ -10056,7 +10064,7 @@ CK_RV SoftHSM::generateSLH
 	{
 		const CK_ULONG maxAttribs = 32;
 		CK_OBJECT_CLASS publicKeyClass = CKO_PUBLIC_KEY;
-		CK_KEY_TYPE publicKeyType = CKK_EC_EDWARDS;
+		CK_KEY_TYPE publicKeyType = CKK_SLHDSA;
 		CK_ATTRIBUTE publicKeyAttribs[maxAttribs] = {
 			{ CKA_CLASS, &publicKeyClass, sizeof(publicKeyClass) },
 			{ CKA_TOKEN, &isPublicKeyOnToken, sizeof(isPublicKeyOnToken) },
@@ -10096,7 +10104,7 @@ CK_RV SoftHSM::generateSLH
 
 				// Common Key Attributes
 				bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
-				CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_EC_EDWARDS_KEY_PAIR_GEN;
+				CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_SLH_KEY_PAIR_GEN;
 				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
 
 				// EDDSA Public Key Attributes
@@ -10128,7 +10136,7 @@ CK_RV SoftHSM::generateSLH
 	{
 		const CK_ULONG maxAttribs = 32;
 		CK_OBJECT_CLASS privateKeyClass = CKO_PRIVATE_KEY;
-		CK_KEY_TYPE privateKeyType = CKK_EC_EDWARDS;
+		CK_KEY_TYPE privateKeyType = CKK_SLHDSA;
 		CK_ATTRIBUTE privateKeyAttribs[maxAttribs] = {
 			{ CKA_CLASS, &privateKeyClass, sizeof(privateKeyClass) },
 			{ CKA_TOKEN, &isPrivateKeyOnToken, sizeof(isPrivateKeyOnToken) },
@@ -10166,7 +10174,7 @@ CK_RV SoftHSM::generateSLH
 
 				// Common Key Attributes
 				bOK = bOK && osobject->setAttribute(CKA_LOCAL,true);
-				CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_EC_EDWARDS_KEY_PAIR_GEN;
+				CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_SLH_KEY_PAIR_GEN;
 				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
 
 				// Common Private Key Attributes
@@ -10188,7 +10196,7 @@ CK_RV SoftHSM::generateSLH
 					group = priv->getEC();
 					value = priv->getK();
 				}
-				bOK = bOK && osobject->setAttribute(CKA_EC_PARAMS, group);
+				bOK = bOK && osobject->setAttribute(CKA_SLHDSA_PARAMS, group);
 				bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
 
 				if (bOK)
@@ -12974,14 +12982,14 @@ CK_RV SoftHSM::getSLHPrivateKey(SLHPrivateKey* privateKey, Token* token, OSObjec
 	if (isKeyPrivate)
 	{
 		bool bOK = true;
-		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_EC_PARAMS), group);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_SLHDSA_PARAMS), group);
 		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_VALUE), value);
 		if (!bOK)
 			return CKR_GENERAL_ERROR;
 	}
 	else
 	{
-		group = key->getByteStringValue(CKA_EC_PARAMS);
+		group = key->getByteStringValue(CKA_SLHDSA_PARAMS);
 		value = key->getByteStringValue(CKA_VALUE);
 	}
 
@@ -13006,14 +13014,14 @@ CK_RV SoftHSM::getSLHPublicKey(SLHPublicKey* publicKey, Token* token, OSObject* 
 	if (isKeyPrivate)
 	{
 		bool bOK = true;
-		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_EC_PARAMS), group);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_SLHDSA_PARAMS), group);
 		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_EC_POINT), value);
 		if (!bOK)
 			return CKR_GENERAL_ERROR;
 	}
 	else
 	{
-		group = key->getByteStringValue(CKA_EC_PARAMS);
+		group = key->getByteStringValue(CKA_SLHDSA_PARAMS);
 		value = key->getByteStringValue(CKA_EC_POINT);
 	}
 

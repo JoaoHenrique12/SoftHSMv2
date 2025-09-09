@@ -1179,7 +1179,7 @@ int crypto_save_slhdsa
 	}
 
 	CK_OBJECT_CLASS pubClass = CKO_PUBLIC_KEY, privClass = CKO_PRIVATE_KEY;
-	CK_KEY_TYPE keyType = CKK_EC_EDWARDS;
+	CK_KEY_TYPE keyType = CKK_SLHDSA;
 	CK_BBOOL ckTrue = CK_TRUE, ckFalse = CK_FALSE, ckToken = CK_TRUE;
 	if (noPublicKey)
 	{
@@ -1194,7 +1194,7 @@ int crypto_save_slhdsa
 		{ CKA_VERIFY,         &ckTrue,           sizeof(ckTrue) },
 		{ CKA_ENCRYPT,        &ckFalse,          sizeof(ckFalse) },
 		{ CKA_WRAP,           &ckFalse,          sizeof(ckFalse) },
-		{ CKA_EC_PARAMS,      keyMat->derOID,    keyMat->sizeOID },
+		{ CKA_SLHDSA_PARAMS,      keyMat->derOID,    keyMat->sizeOID },
 		{ CKA_EC_POINT,       keyMat->bigA,      keyMat->sizeA },
 	};
 	CK_ATTRIBUTE privTemplate[] = {
