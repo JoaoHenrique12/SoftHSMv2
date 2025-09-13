@@ -23,9 +23,14 @@
 #include <sys/timeb.h>
 #include "sample.h"
 
-#define CKK_EC_EDWARDS		(0x40UL)
-#define CKM_EC_EDWARDS_KEY_PAIR_GEN	(0x1055UL)
-#define CKM_EDDSA			(0x1057UL)
+// eddsa
+/* #define CKM_KEY_PAIR_GEN	(0x1055UL) */
+/* #define CKM_SIGN			(0x1057UL) */
+
+// New definitions, slh-dsa
+#define CKM_KEY_PAIR_GEN	(0x80010003UL)
+#define CKM_SIGN			(0x80010006UL)
+#define CKA_PARAMS (0x80000030UL)
 
 CK_FUNCTION_LIST  *funcs;
 CK_BYTE           tokenNameBuf[32];
@@ -193,7 +198,6 @@ int main( int argc, char **argv )
   // Use Ed25519 key to sign & verify
   printf("Generating Ed25519 key pair... \n");
   
-  CK_KEY_TYPE keyType = CKK_EC_EDWARDS;
   CK_OBJECT_CLASS keyClass = CKO_PRIVATE_KEY;
   /* DER OID for id-Ed25519 (1.3.101.112) */
   CK_BYTE ED25519_EC_PARAMS[] = { 0x06, 0x03, 0x2B, 0x65, 0x70 };
@@ -204,7 +208,7 @@ CK_ATTRIBUTE pub_tmpl[] = {
     { CKA_VERIFY,    &isTrue,  sizeof(isTrue) },
     { CKA_LABEL,     keyLabel, (CK_ULONG)strlen((char*)keyLabel) },
     { CKA_ID,        id,       (CK_ULONG)sizeof(id) },
-    { CKA_EC_PARAMS, (CK_VOID_PTR)ED25519_EC_PARAMS,
+    { CKA_PARAMS, (CK_VOID_PTR)ED25519_EC_PARAMS,
                      (CK_ULONG)sizeof(ED25519_EC_PARAMS) }
 };
 
@@ -216,7 +220,7 @@ CK_ATTRIBUTE priv_tmpl[] = {
     { CKA_ID,      id,       (CK_ULONG)sizeof(id) }
 };
   
-  mech.mechanism      = CKM_EC_EDWARDS_KEY_PAIR_GEN;
+  mech.mechanism      = CKM_KEY_PAIR_GEN;
   mech.ulParameterLen = 0;
   mech.pParameter     = NULL;
 
@@ -259,7 +263,7 @@ CK_ATTRIBUTE priv_tmpl[] = {
   CK_ULONG signatureLen = sizeof(signature);
 
   printf("Signing the data from %s with Ed25519 private key... \n", file_to_sign);
-  mech.mechanism      = CKM_EDDSA;
+  mech.mechanism      = CKM_SIGN;
   mech.ulParameterLen = 0;
   mech.pParameter     = NULL;
 
