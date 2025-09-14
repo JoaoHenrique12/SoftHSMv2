@@ -10019,7 +10019,6 @@ CK_RV SoftHSM::generateSLH
 		return CKR_GENERAL_ERROR;
 
 	// Extract desired key information
-	// NOTE: thinking about pPublicKeyTemplate...
 	ByteString params;
 	for (CK_ULONG i = 0; i < ulPublicKeyAttributeCount; i++)
 	{
@@ -10045,12 +10044,12 @@ CK_RV SoftHSM::generateSLH
 
 	// Generate key pair
 	AsymmetricKeyPair* kp = NULL;
-	AsymmetricAlgorithm* ec = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::SLHDSA);
-	if (ec == NULL) return CKR_GENERAL_ERROR;
-	if (!ec->generateKeyPair(&kp, &p))
+	AsymmetricAlgorithm* slh = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::SLHDSA);
+	if (slh == NULL) return CKR_GENERAL_ERROR;
+	if (!slh->generateKeyPair(&kp, &p))
 	{
 		ERROR_MSG("Could not generate key pair");
-		CryptoFactory::i()->recycleAsymmetricAlgorithm(ec);
+		CryptoFactory::i()->recycleAsymmetricAlgorithm(slh);
 		return CKR_GENERAL_ERROR;
 	}
 
@@ -10107,7 +10106,7 @@ CK_RV SoftHSM::generateSLH
 				CK_ULONG ulKeyGenMechanism = (CK_ULONG)CKM_SLH_KEY_PAIR_GEN;
 				bOK = bOK && osobject->setAttribute(CKA_KEY_GEN_MECHANISM,ulKeyGenMechanism);
 
-				// EDDSA Public Key Attributes
+				// SLHDSA Public Key Attributes
 				ByteString value;
 				if (isPublicKeyPrivate)
 				{
@@ -10212,8 +10211,8 @@ CK_RV SoftHSM::generateSLH
 	}
 
 	// Clean up
-	ec->recycleKeyPair(kp);
-	CryptoFactory::i()->recycleAsymmetricAlgorithm(ec);
+	slh->recycleKeyPair(kp);
+	CryptoFactory::i()->recycleAsymmetricAlgorithm(slh);
 
 	// Remove keys that may have been created already when the function fails.
 	if (rv != CKR_OK)
