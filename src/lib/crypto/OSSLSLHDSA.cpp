@@ -244,6 +244,8 @@ bool OSSLSLHDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParame
 	ECParameters* params = (ECParameters*) parameters;
 	int nid = OSSL::byteString2oid(params->getEC());
 
+	INFO_MSG("SLH-DSA nid %d", nid);
+
 	// Generate the key-pair
 	EVP_PKEY* pkey = NULL;
 	EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_id(nid, NULL);
@@ -272,8 +274,13 @@ bool OSSLSLHDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParame
 	// Create an asymmetric key-pair object to return
 	OSSLSLHKeyPair* kp = new OSSLSLHKeyPair();
 
+	INFO_MSG("INIT PublicKey.setFromOSSL");
 	((OSSLSLHPublicKey*) kp->getPublicKey())->setFromOSSL(pkey);
+	INFO_MSG("END PublicKey.setFromOSSL");
+
+	INFO_MSG("INIT Private.setFromOSSL");
 	((OSSLSLHPrivateKey*) kp->getPrivateKey())->setFromOSSL(pkey);
+	INFO_MSG("END Private.setFromOSSL");
 
 	*ppKeyPair = kp;
 
