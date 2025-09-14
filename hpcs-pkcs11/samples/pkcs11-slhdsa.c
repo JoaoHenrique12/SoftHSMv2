@@ -199,7 +199,11 @@ int main( int argc, char **argv )
   printf("Generating Ed25519 key pair... \n");
   
   CK_OBJECT_CLASS keyClass = CKO_PRIVATE_KEY;
+  /* OID Object Identifier  */
   /* DER OID for id-Ed25519 (1.3.101.112) */
+/* https://thalesdocs.com/gphsm/luna/7/docs/network/Content/sdk/using/ecc_curve_cross-reference.htm */
+/* https://crypto.stackexchange.com/questions/81023/oid-for-ed25519 */
+  /* 06 09 2B 06 01 04 01 DA 47 0F 01 */
   CK_BYTE ED25519_EC_PARAMS[] = { 0x06, 0x03, 0x2B, 0x65, 0x70 };
   
 /* Public key template */
