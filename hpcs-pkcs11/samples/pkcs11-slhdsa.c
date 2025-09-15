@@ -195,16 +195,11 @@ int main( int argc, char **argv )
     return !CKR_OK;
   }
 
-  // Use Ed25519 key to sign & verify
-  printf("Generating Ed25519 key pair... \n");
+  // Use SLH-DSA-SHA2-128s key to sign & verify
+  printf("Generating SLH-DSA key pair... \n");
   
   CK_OBJECT_CLASS keyClass = CKO_PRIVATE_KEY;
-  /* OID Object Identifier  */
-  /* DER OID for id-Ed25519 (1.3.101.112) */
-/* https://thalesdocs.com/gphsm/luna/7/docs/network/Content/sdk/using/ecc_curve_cross-reference.htm */
-/* https://crypto.stackexchange.com/questions/81023/oid-for-ed25519 */
-  /* 06 09 2B 06 01 04 01 DA 47 0F 01 */
-  CK_BYTE ED25519_EC_PARAMS[] = { 0x06, 0x03, 0x2B, 0x65, 0x70 };
+  CK_BYTE SLH_DSA_PARAMS[] = "SLH-DSA-SHA2-128s";
   
 /* Public key template */
 CK_ATTRIBUTE pub_tmpl[] = {
@@ -212,8 +207,8 @@ CK_ATTRIBUTE pub_tmpl[] = {
     { CKA_VERIFY,    &isTrue,  sizeof(isTrue) },
     { CKA_LABEL,     keyLabel, (CK_ULONG)strlen((char*)keyLabel) },
     { CKA_ID,        id,       (CK_ULONG)sizeof(id) },
-    { CKA_PARAMS, (CK_VOID_PTR)ED25519_EC_PARAMS,
-                     (CK_ULONG)sizeof(ED25519_EC_PARAMS) }
+    { CKA_PARAMS, (CK_VOID_PTR)SLH_DSA_PARAMS,
+                     (CK_ULONG)sizeof(SLH_DSA_PARAMS) }
 };
 
 /* Private key template */
@@ -266,7 +261,7 @@ CK_ATTRIBUTE priv_tmpl[] = {
   CK_BYTE signature[1024];
   CK_ULONG signatureLen = sizeof(signature);
 
-  printf("Signing the data from %s with Ed25519 private key... \n", file_to_sign);
+  printf("Signing the data from %s with SLH-DSA-SHA2-128s private key... \n", file_to_sign);
   mech.mechanism      = CKM_SIGN;
   mech.ulParameterLen = 0;
   mech.pParameter     = NULL;
@@ -289,7 +284,7 @@ CK_ATTRIBUTE priv_tmpl[] = {
   
   DUMP_HEXA(signature, signatureLen);
 
-  printf("Verifying the data with Ed25519 public key... \n");
+  printf("Verifying the data with SLH-DSA-SHA2-128s public key... \n");
   rc = funcs->C_VerifyInit(session, &mech, publicKey);
   if (rc != CKR_OK) {
     printf("error C_VerifyInit: rc=0x%04lx\n", rc );
