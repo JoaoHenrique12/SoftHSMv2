@@ -71,7 +71,7 @@ const ByteString& SLHPublicKey::getDerPublicKey() const
 // Serialisation
 ByteString SLHPublicKey::serialise() const
 {
-	return derPublicKey.serialise()
+	return derPublicKey.serialise();
 }
 
 bool SLHPublicKey::deserialise(ByteString& serialised)

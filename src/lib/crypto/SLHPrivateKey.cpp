@@ -69,7 +69,7 @@ const ByteString& SLHPrivateKey::getDerPrivateKey() const
 // Serialisation
 ByteString SLHPrivateKey::serialise() const
 {
-	return derPrivateKey.serialise()
+	return derPrivateKey.serialise();
 }
 
 bool SLHPrivateKey::deserialise(ByteString& serialised)

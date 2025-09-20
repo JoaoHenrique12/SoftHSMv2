@@ -58,8 +58,7 @@ public:
 	virtual unsigned long getOrderLength() const;
 
 	// Setters for the SLHDSA public key components
-	virtual void setEC(const ByteString& inEC);
-	virtual void setA(const ByteString& inA);
+	virtual void setDerPublicKey(const ByteString& inPk);
 
 	// Set from OpenSSL representation
 	virtual void setFromOSSL(const EVP_PKEY* inPKEY);
@@ -69,7 +68,7 @@ public:
 
 private:
 	// The internal OpenSSL representation
-	int nid;
+	const char* name;
 	EVP_PKEY* pkey;
 
 	// Create the OpenSSL representation of the key

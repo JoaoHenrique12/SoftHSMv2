@@ -51,6 +51,9 @@ public:
 	// Get the output length
 	virtual unsigned long getOutputLength() const;
 
+	// Get the order length
+	virtual unsigned long getOrderLength() const = 0;
+
 	// Setters for the SLHDSA public key components
 	virtual void setDerPublicKey(const ByteString& inPk);
 
