@@ -31,11 +31,11 @@
  *****************************************************************************/
 
 #include "config.h"
-#ifdef WITH_SLHDSA
+// #ifdef WITH_SLHDSA
 #include "log.h"
 #include "OSSLSLHDSA.h"
 #include "CryptoFactory.h"
-#include "ECParameters.h"
+#include "SLHParameters.h"
 #include "OSSLSLHKeyPair.h"
 #include "OSSLComp.h"
 #include "OSSLUtil.h"
@@ -234,21 +234,21 @@ bool OSSLSLHDSA::generateKeyPair(AsymmetricKeyPair** ppKeyPair, AsymmetricParame
 		return false;
 	}
 
-	if (!parameters->areOfType(ECParameters::type))
+	if (!parameters->areOfType(SLHParameters::type))
 	{
 		ERROR_MSG("Invalid parameters supplied for SLHDSA key generation");
 
 		return false;
 	}
 
-	ECParameters* params = (ECParameters*) parameters;
-	int nid = OSSL::byteString2oid(params->getEC());
+	SLHParameters* params = (SLHParameters*) parameters;
 
-	INFO_MSG("SLH-DSA nid %d", nid);
+	const unsigned char* name = params->getName().const_byte_str();
+	INFO_MSG("SLH-DSA name: <%s>", name);
 
 	// Generate the key-pair
 	EVP_PKEY* pkey = NULL;
-	EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_id(nid, NULL);
+	EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_from_name(NULL, reinterpret_cast<const char*>(name), NULL);
 	if (ctx == NULL)
 	{
 		ERROR_MSG("Failed to instantiate OpenSSL SLHDSA context");
@@ -475,7 +475,7 @@ PrivateKey* OSSLSLHDSA::newPrivateKey()
 
 AsymmetricParameters* OSSLSLHDSA::newParameters()
 {
-	return (AsymmetricParameters*) new ECParameters();
+	return (AsymmetricParameters*) new SLHParameters();
 }
 
 bool OSSLSLHDSA::reconstructParameters(AsymmetricParameters** ppParams, ByteString& serialisedData)
@@ -486,7 +486,7 @@ bool OSSLSLHDSA::reconstructParameters(AsymmetricParameters** ppParams, ByteStri
 		return false;
 	}
 
-	ECParameters* params = new ECParameters();
+	SLHParameters* params = new SLHParameters();
 
 	if (!params->deserialise(serialisedData))
 	{
@@ -499,4 +499,4 @@ bool OSSLSLHDSA::reconstructParameters(AsymmetricParameters** ppParams, ByteStri
 
 	return true;
 }
-#endif
+// #endif

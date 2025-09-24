@@ -55,6 +55,7 @@
 #include "ECPublicKey.h"
 #include "ECPrivateKey.h"
 #include "ECParameters.h"
+#include "SLHParameters.h"
 #include "EDPublicKey.h"
 #include "EDPrivateKey.h"
 #include "DHParameters.h"
@@ -10044,7 +10045,8 @@ CK_RV SoftHSM::generateSLH
 				break;
 		}
 	}
-	INFO_MSG("Extracted public key params <%s>", params.hex_str().c_str());
+	INFO_MSG("Extracted public key params <%s>", params.const_byte_str());
+
 
 	// The parameters must be specified to be able to generate a key pair.
 	if (params.size() == 0) {
@@ -10053,9 +10055,9 @@ CK_RV SoftHSM::generateSLH
 	}
 
 	// Set the parameters
-	ECParameters p;
-	p.setEC(params);
-	INFO_MSG("seted params for EC in SLH-DSA");
+	SLHParameters p;
+	p.setName(params);
+	INFO_MSG("seted params for SLH-DSA");
 
 	// Generate key pair
 	AsymmetricKeyPair* kp = NULL;
@@ -10132,13 +10134,13 @@ CK_RV SoftHSM::generateSLH
 				ByteString value;
 				if (isPublicKeyPrivate)
 				{
-					token->encrypt(pub->getA(), value);
+					token->encrypt(pub->getDerPublicKey(), value);
 				}
 				else
 				{
-					value = pub->getA();
+					value = pub->getDerPublicKey();
 				}
-				bOK = bOK && osobject->setAttribute(CKA_EC_POINT, value);
+				bOK = bOK && osobject->setAttribute(CKA_SLHDSA_PARAMS, value);
 
 				if (bOK)
 					bOK = osobject->commitTransaction();
@@ -10211,20 +10213,16 @@ CK_RV SoftHSM::generateSLH
 				bOK = bOK && osobject->setAttribute(CKA_NEVER_EXTRACTABLE, bNeverExtractable);
 
 				// SLHDSA Private Key Attributes
-				ByteString group;
 				ByteString value;
 				if (isPrivateKeyPrivate)
 				{
-					token->encrypt(priv->getEC(), group);
-					token->encrypt(priv->getK(), value);
+					token->encrypt(priv->getDerPrivateKey(), value);
 				}
 				else
 				{
-					group = priv->getEC();
-					value = priv->getK();
+					value = priv->getDerPrivateKey();
 				}
-				bOK = bOK && osobject->setAttribute(CKA_SLHDSA_PARAMS, group);
-				bOK = bOK && osobject->setAttribute(CKA_VALUE, value);
+				bOK = bOK && osobject->setAttribute(CKA_SLHDSA_PARAMS, value);
 
 				if (bOK)
 					bOK = osobject->commitTransaction();
@@ -13031,24 +13029,20 @@ CK_RV SoftHSM::getSLHPrivateKey(SLHPrivateKey* privateKey, Token* token, OSObjec
 	bool isKeyPrivate = key->getBooleanValue(CKA_PRIVATE, false);
 
 	// SLHDSA Private Key Attributes
-	ByteString group;
 	ByteString value;
 	if (isKeyPrivate)
 	{
 		bool bOK = true;
-		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_SLHDSA_PARAMS), group);
-		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_VALUE), value);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_SLHDSA_PARAMS), value);
 		if (!bOK)
 			return CKR_GENERAL_ERROR;
 	}
 	else
 	{
-		group = key->getByteStringValue(CKA_SLHDSA_PARAMS);
-		value = key->getByteStringValue(CKA_VALUE);
+		value = key->getByteStringValue(CKA_SLHDSA_PARAMS);
 	}
 
-	privateKey->setEC(group);
-	privateKey->setK(value);
+	privateKey->setDerPrivateKey(value);
 
 	return CKR_OK;
 }
@@ -13062,25 +13056,21 @@ CK_RV SoftHSM::getSLHPublicKey(SLHPublicKey* publicKey, Token* token, OSObject* 
 	// Get the CKA_PRIVATE attribute, when the attribute is not present use default false
 	bool isKeyPrivate = key->getBooleanValue(CKA_PRIVATE, false);
 
-	// EC Public Key Attributes
-	ByteString group;
+	// SLHDSA Public Key Attributes
 	ByteString value;
 	if (isKeyPrivate)
 	{
 		bool bOK = true;
-		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_SLHDSA_PARAMS), group);
-		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_EC_POINT), value);
+		bOK = bOK && token->decrypt(key->getByteStringValue(CKA_SLHDSA_PARAMS), value);
 		if (!bOK)
 			return CKR_GENERAL_ERROR;
 	}
 	else
 	{
-		group = key->getByteStringValue(CKA_SLHDSA_PARAMS);
-		value = key->getByteStringValue(CKA_EC_POINT);
+		value = key->getByteStringValue(CKA_SLHDSA_PARAMS);
 	}
 
-	publicKey->setEC(group);
-	publicKey->setA(value);
+	publicKey->setDerPublicKey(value);
 
 	return CKR_OK;
 }
