@@ -944,7 +944,7 @@ P11SLHPublicKeyObj::P11SLHPublicKeyObj()
 // Add attributes
 bool P11SLHPublicKeyObj::init(OSObject *inobject)
 {
-	INFO_MSG("INIT P11SLHPublicKeyObj TODO");
+	INFO_MSG("INIT P11SLHPublicKeyObj");
 	if (initialized) return true;
 	if (inobject == NULL) return false;
 
@@ -957,25 +957,25 @@ bool P11SLHPublicKeyObj::init(OSObject *inobject)
 	if (!P11PublicKeyObj::init(inobject)) return false;
 
 	// Create attributes
-	P11Attribute* attrEcParams = new P11AttrEcParams(osobject,P11Attribute::ck3);
-	P11Attribute* attrEcPoint = new P11AttrEcPoint(osobject);
+	P11Attribute* attrSLHDSAParams = new P11AttrSLHDSAParams(osobject,P11Attribute::ck3);
+	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck7);
 
 	// Initialize the attributes
 	if
 	(
-		!attrEcParams->init() ||
-		!attrEcPoint->init()
+		!attrSLHDSAParams->init() ||
+		!attrValue->init()
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
-		delete attrEcParams;
-		delete attrEcPoint;
+		delete attrSLHDSAParams;
+		delete attrValue;
 		return false;
 	}
 
 	// Add them to the map
-	attributes[attrEcParams->getType()] = attrEcParams;
-	attributes[attrEcPoint->getType()] = attrEcPoint;
+	attributes[attrSLHDSAParams->getType()] = attrSLHDSAParams;
+	attributes[attrValue->getType()] = attrValue;
 
 	initialized = true;
 	INFO_MSG("END P11SLHPublicKeyObj");
@@ -1396,6 +1396,7 @@ P11SLHPrivateKeyObj::P11SLHPrivateKeyObj()
 // Add attributes
 bool P11SLHPrivateKeyObj::init(OSObject *inobject)
 {
+	INFO_MSG("INIT P11SLHPrivateKeyObj");
 	if (initialized) return true;
 	if (inobject == NULL) return false;
 
@@ -1408,27 +1409,28 @@ bool P11SLHPrivateKeyObj::init(OSObject *inobject)
 	if (!P11PrivateKeyObj::init(inobject)) return false;
 
 	// Create attributes
-	P11Attribute* attrEcParams = new P11AttrEcParams(osobject,P11Attribute::ck4|P11Attribute::ck6);
+	P11Attribute* attrSLHDSAParams = new P11AttrSLHDSAParams(osobject,P11Attribute::ck4|P11Attribute::ck6);
 	P11Attribute* attrValue = new P11AttrValue(osobject,P11Attribute::ck1|P11Attribute::ck4|P11Attribute::ck6|P11Attribute::ck7);
 
 	// Initialize the attributes
 	if
 	(
-		!attrEcParams->init() ||
+		!attrSLHDSAParams->init() ||
 		!attrValue->init()
 	)
 	{
 		ERROR_MSG("Could not initialize the attribute");
-		delete attrEcParams;
+		delete attrSLHDSAParams;
 		delete attrValue;
 		return false;
 	}
 
 	// Add them to the map
-	attributes[attrEcParams->getType()] = attrEcParams;
+	attributes[attrSLHDSAParams->getType()] = attrSLHDSAParams;
 	attributes[attrValue->getType()] = attrValue;
 
 	initialized = true;
+	INFO_MSG("END P11SLHPrivateKeyObj");
 	return true;
 }
 
