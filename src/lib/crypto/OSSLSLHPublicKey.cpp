@@ -73,10 +73,32 @@ OSSLSLHPublicKey::~OSSLSLHPublicKey()
 // The type
 /*static*/ const char* OSSLSLHPublicKey::type = "OpenSSL SLHDSA Public Key";
 
-// Get the base point order length
 unsigned long OSSLSLHPublicKey::getOrderLength() const
 {
-	return getDerPublicKey().size();
+  if (name == NULL){
+    ERROR_MSG("Could not determine the signature size, name is NULL");
+    return 0;
+  }
+  size_t name_len = strnlen(name, 100);
+  size_t signature_size = 0;
+
+  INFO_MSG("name %s", name);
+  if (strncmp(&name[name_len - 4], "128s", 4) == 0) {
+    signature_size = 7856;
+  } else if (strncmp(&name[name_len - 4], "128f", 4) == 0) {
+    signature_size = 17088;
+  } else if (strncmp(&name[name_len - 4], "192s", 4) == 0) {
+    signature_size = 16224;
+  } else if (strncmp(&name[name_len - 4], "192f", 4) == 0) {
+    signature_size = 35664;
+  } else if (strncmp(&name[name_len - 4], "256s", 4) == 0) {
+    signature_size = 29792;
+  } else if (strncmp(&name[name_len - 4], "256f", 4) == 0) {
+    signature_size = 49856;
+  } else{
+    ERROR_MSG("Could not determine the signature size");
+  }
+	return signature_size;
 }
 
 // Set from OpenSSL representation
@@ -115,6 +137,12 @@ void OSSLSLHPublicKey::setDerPublicKey(const ByteString& inPk)
 {
 	SLHPublicKey::setDerPublicKey(inPk);
 
+	getOSSLKey();
+  if (EVP_PKEY_get0_type_name(pkey) == NULL)
+  	{ ERROR_MSG("Could not determine algorithm name from EVP_PKEY"); return; }
+
+  name = EVP_PKEY_get0_type_name(pkey);
+
 	if (pkey)
 		{ EVP_PKEY_free(pkey); pkey = NULL; }
 }
@@ -134,5 +162,9 @@ void OSSLSLHPublicKey::createOSSLKey()
 
 	const unsigned char *p = &derPublicKey[0];
 	pkey = d2i_PUBKEY(NULL, &p, (long)derPublicKey.size());
+
+  if (EVP_PKEY_get0_type_name(pkey) == NULL)
+  	{ ERROR_MSG("Could not determine algorithm name from EVP_PKEY"); return; }
+  name = EVP_PKEY_get0_type_name(pkey);
 }
 #endif

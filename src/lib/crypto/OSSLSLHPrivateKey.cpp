@@ -69,7 +69,31 @@ OSSLSLHPrivateKey::~OSSLSLHPrivateKey()
 
 unsigned long OSSLSLHPrivateKey::getOrderLength() const
 {
-	return getDerPrivateKey().size();
+  if (name == NULL){
+    ERROR_MSG("Could not determine the signature size, name is NULL");
+  	return 0;
+  }
+
+  size_t name_len = strnlen(name, 100);
+  size_t signature_size = 0;
+
+  INFO_MSG("name %s", name);
+  if (strncmp(&name[name_len - 4], "128s", 4) == 0) {
+    signature_size = 7856;
+  } else if (strncmp(&name[name_len - 4], "128f", 4) == 0) {
+    signature_size = 17088;
+  } else if (strncmp(&name[name_len - 4], "192s", 4) == 0) {
+    signature_size = 16224;
+  } else if (strncmp(&name[name_len - 4], "192f", 4) == 0) {
+    signature_size = 35664;
+  } else if (strncmp(&name[name_len - 4], "256s", 4) == 0) {
+    signature_size = 29792;
+  } else if (strncmp(&name[name_len - 4], "256f", 4) == 0) {
+    signature_size = 49856;
+  } else{
+    ERROR_MSG("Could not determine the signature size");
+  }
+	return signature_size;
 }
 
 // Set from OpenSSL representation
@@ -114,6 +138,12 @@ bool OSSLSLHPrivateKey::isOfType(const char* inType)
 void OSSLSLHPrivateKey::setDerPrivateKey(const ByteString& inSk)
 {
 	SLHPrivateKey::setDerPrivateKey(inSk);
+
+	getOSSLKey();
+  if (EVP_PKEY_get0_type_name(pkey) == NULL)
+  	{ ERROR_MSG("Could not determine algorithm name from EVP_PKEY"); return; }
+
+  name = EVP_PKEY_get0_type_name(pkey);
 
 	if (pkey)
 		{ EVP_PKEY_free(pkey); pkey = NULL; }
@@ -179,6 +209,10 @@ void OSSLSLHPrivateKey::createOSSLKey()
 
   if (!pkey)
   	ERROR_MSG("EVP_PKCS82PKEY; Error on deserialize derPrivateKey to pkey");
+
+  if (EVP_PKEY_get0_type_name(pkey) == NULL)
+  	{ ERROR_MSG("Could not determine algorithm name from EVP_PKEY"); return; }
+  name = EVP_PKEY_get0_type_name(pkey);
 }
 
 
