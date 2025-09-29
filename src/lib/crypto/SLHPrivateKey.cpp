@@ -53,7 +53,7 @@ unsigned long SLHPrivateKey::getBitLength() const
 // Get the output length
 unsigned long SLHPrivateKey::getOutputLength() const
 {
-	return getOrderLength() * 2;
+	return getOrderLength();
 }
 
 void SLHPrivateKey::setDerPrivateKey(const ByteString& inSk)

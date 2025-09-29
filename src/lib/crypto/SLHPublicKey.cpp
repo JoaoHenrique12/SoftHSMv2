@@ -53,7 +53,7 @@ unsigned long SLHPublicKey::getBitLength() const
 // Get the output length
 unsigned long SLHPublicKey::getOutputLength() const
 {
-	return getOrderLength() * 2;
+	return getOrderLength();
 }
 
 // Setters for the SLH public key components

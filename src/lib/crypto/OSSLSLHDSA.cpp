@@ -81,7 +81,6 @@ bool OSSLSLHDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 		ERROR_MSG("Could not get the order length");
 		return false;
 	}
-	len *= 2;
 	signature.resize(len);
 	memset(&signature[0], 0, len);
 	EVP_MD_CTX* ctx = EVP_MD_CTX_new();
