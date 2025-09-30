@@ -93,6 +93,13 @@ bool OSSLSLHDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 	if (!EVP_DigestSign(ctx, &signature[0], &len, dataToSign.const_byte_str(), dataToSign.size()))
 	{
 		ERROR_MSG("SLHDSA sign failed (0x%08X)", ERR_get_error());
+
+		unsigned long err = ERR_get_error();
+		char buf[256];
+		ERR_error_string_n(err, buf, sizeof(buf));
+		fprintf(stderr, "SLHDSA sign failed: %s\n", buf);
+		fprintf(stderr, "Key type: %s\n", EVP_PKEY_get0_type_name(pkey));
+
 		EVP_MD_CTX_free(ctx);
 		return false;
 	}
@@ -127,6 +134,7 @@ bool OSSLSLHDSA::verify(PublicKey* publicKey, const ByteString& originalData,
 		       const ByteString& signature, const AsymMech::Type mechanism,
 		       const void* /* param = NULL */, const size_t /* paramLen = 0 */)
 {
+	INFO_MSG("Init verify");
 	if (mechanism != AsymMech::SLHDSA)
 	{
 		ERROR_MSG("Invalid mechanism supplied (%i)", mechanism);
@@ -158,7 +166,6 @@ bool OSSLSLHDSA::verify(PublicKey* publicKey, const ByteString& originalData,
 		ERROR_MSG("Could not get the order length");
 		return false;
 	}
-	len *= 2;
 	if (signature.size() != len)
 	{
 		ERROR_MSG("Invalid buffer length");

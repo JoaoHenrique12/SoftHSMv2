@@ -4135,6 +4135,7 @@ CK_RV SoftHSM::MacSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechani
 // AsymmetricAlgorithm version of C_SignInit
 CK_RV SoftHSM::AsymSignInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
 {
+	INFO_MSG("here init signature")
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
@@ -4665,6 +4666,7 @@ static CK_RV MacSign(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK
 // AsymmetricAlgorithm version of C_Sign
 static CK_RV AsymSign(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, CK_BYTE_PTR pSignature, CK_ULONG_PTR pulSignatureLen)
 {
+	INFO_MSG("here signs the message")
 	AsymmetricAlgorithm* asymCrypto = session->getAsymmetricCryptoOp();
 	AsymMech::Type mechanism = session->getMechanism();
 	PrivateKey* privateKey = session->getPrivateKey();
@@ -4694,6 +4696,7 @@ static CK_RV AsymSign(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, C
 	// Check buffer size
 	if (*pulSignatureLen < size)
 	{
+		ERROR_MSG("signatureLen=%d, size=%d", *pulSignatureLen, size);
 		*pulSignatureLen = size;
 		return CKR_BUFFER_TOO_SMALL;
 	}
@@ -4728,7 +4731,7 @@ static CK_RV AsymSign(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, C
 	// Check size
 	if (signature.size() != size)
 	{
-		ERROR_MSG("The size of the signature differs from the size of the mechanism");
+		ERROR_MSG("The size of the signature differs from the size of the mechanism %d, %d", signature.size(), size);
 		session->resetOp();
 		return CKR_GENERAL_ERROR;
 	}
@@ -4736,6 +4739,7 @@ static CK_RV AsymSign(Session* session, CK_BYTE_PTR pData, CK_ULONG ulDataLen, C
 	*pulSignatureLen = size;
 
 	session->resetOp();
+	INFO_MSG("Signature finished.");
 	return CKR_OK;
 }
 
@@ -5536,6 +5540,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 #ifdef WITH_SLHDSA
 	else if (isSLHDSA)
 	{
+		INFO_MSG("INIT take SLH-DSA public key.");
 		asymCrypto = CryptoFactory::i()->getAsymmetricAlgorithm(AsymAlgo::SLHDSA);
 		if (asymCrypto == NULL) return CKR_MECHANISM_INVALID;
 
@@ -5552,6 +5557,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 			CryptoFactory::i()->recycleAsymmetricAlgorithm(asymCrypto);
 			return CKR_GENERAL_ERROR;
 		}
+		INFO_MSG("END take SLH-DSA public key.");
 	}
 #endif
 	else
@@ -5594,6 +5600,7 @@ CK_RV SoftHSM::AsymVerifyInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMech
 	session->setAllowSinglePartOp(true);
 	session->setPublicKey(publicKey);
 
+	INFO_MSG("END AsymVerifyInit.");
 	return CKR_OK;
 }
 
@@ -13019,6 +13026,7 @@ CK_RV SoftHSM::getEDPublicKey(EDPublicKey* publicKey, Token* token, OSObject* ke
 	return CKR_OK;
 }
 
+// PTAL
 CK_RV SoftHSM::getSLHPrivateKey(SLHPrivateKey* privateKey, Token* token, OSObject* key)
 {
 	if (privateKey == NULL) return CKR_ARGUMENTS_BAD;
@@ -13070,7 +13078,9 @@ CK_RV SoftHSM::getSLHPublicKey(SLHPublicKey* publicKey, Token* token, OSObject* 
 		value = key->getByteStringValue(CKA_SLHDSA_PARAMS);
 	}
 
+	INFO_MSG("INIT setDerPublicKey");
 	publicKey->setDerPublicKey(value);
+	INFO_MSG("END setDerPublicKey");
 
 	return CKR_OK;
 }
