@@ -258,7 +258,7 @@ CK_ATTRIBUTE priv_tmpl[] = {
   fclose(fp);
   
   CK_ULONG dataToBeSignedLen = file_size;
-  CK_BYTE signature[1024];
+  CK_BYTE signature[7856];
   CK_ULONG signatureLen = sizeof(signature);
 
   printf("Signing the data from %s with SLH-DSA-SHA2-128s private key... \n", file_to_sign);
