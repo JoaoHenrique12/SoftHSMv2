@@ -39,12 +39,6 @@
 #include <openssl/x509.h>
 #include <string.h>
 
-#define X25519_KEYLEN	32
-#define X448_KEYLEN	56
-#define ED448_KEYLEN	57
-
-#define PREFIXLEN	12
-
 // Constructors
 OSSLSLHPublicKey::OSSLSLHPublicKey()
 {
