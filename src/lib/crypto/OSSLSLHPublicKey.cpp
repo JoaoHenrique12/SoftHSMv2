@@ -157,6 +157,9 @@ void OSSLSLHPublicKey::createOSSLKey()
 	const unsigned char *p = &derPublicKey[0];
 	pkey = d2i_PUBKEY(NULL, &p, (long)derPublicKey.size());
 
+  if (!pkey)
+  	ERROR_MSG("d2i_PUBKEY; Error on deserialize derPublicKey to pkey");
+
   if (EVP_PKEY_get0_type_name(pkey) == NULL)
   	{ ERROR_MSG("Could not determine algorithm name from EVP_PKEY"); return; }
   name = EVP_PKEY_get0_type_name(pkey);
