@@ -106,7 +106,7 @@ void OSSLSLHPublicKey::setFromOSSL(const EVP_PKEY* inPKEY)
   name = EVP_PKEY_get0_type_name(inPKEY);
 
 	ByteString der;
-  int len = i2d_PUBKEY(pkey, NULL);
+  int len = i2d_PUBKEY(inPKEY, NULL);
   if (len <= 0)
   {
   	ERROR_MSG("i2d_PUBKEY info error, len is smaller or eq than zero");
@@ -114,7 +114,7 @@ void OSSLSLHPublicKey::setFromOSSL(const EVP_PKEY* inPKEY)
   }
 	der.resize(len);
   unsigned char* p = &der[0];
-  if (i2d_PUBKEY(pkey, &p) != len)
+  if (i2d_PUBKEY(inPKEY, &p) != len)
   	{ ERROR_MSG("i2d_PUBKEY serialization error"); return; }
 
 	setDerPublicKey(der);
