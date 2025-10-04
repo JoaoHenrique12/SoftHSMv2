@@ -31,7 +31,7 @@
  *****************************************************************************/
 
 #include "config.h"
-// #ifdef WITH_SLHDSA
+#ifdef WITH_SLHDSA
 #include "log.h"
 #include "OSSLSLHDSA.h"
 #include "CryptoFactory.h"
@@ -97,8 +97,8 @@ bool OSSLSLHDSA::sign(PrivateKey* privateKey, const ByteString& dataToSign,
 		unsigned long err = ERR_get_error();
 		char buf[256];
 		ERR_error_string_n(err, buf, sizeof(buf));
-		fprintf(stderr, "SLHDSA sign failed: %s\n", buf);
-		fprintf(stderr, "Key type: %s\n", EVP_PKEY_get0_type_name(pkey));
+		ERROR_MSG("SLHDSA sign failed: %s\n", buf);
+		ERROR_MSG("Key type: %s\n", EVP_PKEY_get0_type_name(pkey));
 
 		EVP_MD_CTX_free(ctx);
 		return false;
@@ -505,4 +505,4 @@ bool OSSLSLHDSA::reconstructParameters(AsymmetricParameters** ppParams, ByteStri
 
 	return true;
 }
-// #endif
+#endif
