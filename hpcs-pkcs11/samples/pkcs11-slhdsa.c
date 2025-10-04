@@ -199,7 +199,24 @@ int main( int argc, char **argv )
   printf("Generating SLH-DSA key pair... \n");
   
   CK_OBJECT_CLASS keyClass = CKO_PRIVATE_KEY;
+
   CK_BYTE SLH_DSA_PARAMS[] = "SLH-DSA-SHA2-128s";
+  /* CK_BYTE SLH_DSA_PARAMS[] = "SLH-DSA-SHAKE-128s"; */
+  //--------------------
+  /* CK_BYTE SLH_DSA_PARAMS[] = "SLH-DSA-SHA2-128f"; */
+  /* CK_BYTE SLH_DSA_PARAMS[] = "SLH-DSA-SHAKE-128f"; */
+  //--------------------------------------------------
+  /* CK_BYTE SLH_DSA_PARAMS[] = "SLH-DSA-SHA2-192s"; */
+  /* CK_BYTE SLH_DSA_PARAMS[] = "SLH-DSA-SHAKE-192s"; */
+  //--------------------
+  /* CK_BYTE SLH_DSA_PARAMS[] = "SLH-DSA-SHA2-192f"; */
+  /* CK_BYTE SLH_DSA_PARAMS[] = "SLH-DSA-SHAKE-192f"; */
+  //--------------------------------------------------
+  /* CK_BYTE SLH_DSA_PARAMS[] = "SLH-DSA-SHA2-256s"; */
+  /* CK_BYTE SLH_DSA_PARAMS[] = "SLH-DSA-SHAKE-256s"; */
+  //--------------------
+  /* CK_BYTE SLH_DSA_PARAMS[] = "SLH-DSA-SHA2-256f"; */
+  /* CK_BYTE SLH_DSA_PARAMS[] = "SLH-DSA-SHAKE-256f"; */
   
 /* Public key template */
 CK_ATTRIBUTE pub_tmpl[] = {
@@ -259,6 +276,11 @@ CK_ATTRIBUTE priv_tmpl[] = {
   
   CK_ULONG dataToBeSignedLen = file_size;
   CK_BYTE signature[7856];
+  /* CK_BYTE signature[17088]; */
+  /* CK_BYTE signature[16224]; */
+  /* CK_BYTE signature[35664]; */
+  /* CK_BYTE signature[29792]; */
+  /* CK_BYTE signature[49856]; */
   CK_ULONG signatureLen = sizeof(signature);
 
   printf("Signing the data from %s with SLH-DSA-SHA2-128s private key... \n", file_to_sign);
