@@ -940,6 +940,9 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 #if defined(WITH_ECC) || defined(WITH_EDDSA) || defined(WITH_SLHDSA)
 	unsigned long ecdhMinSize = 0, ecdhMaxSize = 0;
 	unsigned long eddsaMinSize = 0, eddsaMaxSize = 0;
+#endif
+
+#if defined(WITH_SLHDSA)
 	unsigned long slhdsaMinSize = 0, slhdsaMaxSize = 0;
 #endif
 
